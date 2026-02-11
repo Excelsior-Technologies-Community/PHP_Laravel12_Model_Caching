@@ -1,59 +1,419 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+#  PHP_Laravel12_Model_Caching
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
+![PHP](https://img.shields.io/badge/PHP-8.x-blue)
+![Cache](https://img.shields.io/badge/Cache-File%20Driver-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+##  Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+This project demonstrates **Model Caching in Laravel 12** using:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* File-based cache driver
+* Manual cache handling with `Cache::remember()`
+* Cache invalidation on delete
+* Performance comparison between cached and non-cached queries
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+##  Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+* Laravel 12 Fresh Installation
+* Product Model & Migration
+* File Cache Configuration
+* Cached Product Listing
+* Non-Cached Product Comparison Endpoint
+* Cache Clearing on Delete
+* Logging to Verify DB Query Execution
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+##  Folder Structure
 
-### Premium Partners
+```
+Laravel12_Model_Caching/
+│
+├── app/
+│   ├── Http/Controllers/ProductController.php
+│   └── Models/Product.php
+│
+├── database/
+│   └── migrations/xxxx_create_products_table.php
+│
+├── resources/
+│   └── views/products.blade.php
+│
+├── routes/
+│   └── web.php
+│
+├── .env
+└── README.md
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+#  Implementation Steps
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Step 1: Install Laravel 12 Project
 
-## Code of Conduct
+Create New Project:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer create-project laravel/laravel Laravel12_Model_Caching
+```
 
-## Security Vulnerabilities
+Start development server:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan serve
+```
 
-## License
+Open in browser:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## Step 2: Configure Database
+
+Open `.env` file and update database settings:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=demo
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+---
+
+## Step 3: Create Product Model & Migration
+
+Generate model with migration:
+
+```bash
+php artisan make:model Product -m
+```
+
+Open migration file inside:
+
+```
+database/migrations/xxxx_create_products_table.php
+```
+
+Replace `up()` method with:
+
+```php
+public function up(): void
+{
+    Schema::create('products', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->decimal('price', 10, 2);
+        $table->boolean('status')->default(1);
+        $table->timestamps();
+    });
+}
+```
+
+Run migration:
+
+```bash
+php artisan migrate
+```
+
+---
+
+## Step 4: Configure Cache (File Driver)
+
+Open `.env` and ensure:
+
+```env
+CACHE_STORE=file
+SESSION_DRIVER=file
+QUEUE_CONNECTION=sync
+```
+
+Clear config cache:
+
+```bash
+php artisan optimize:clear
+```
+
+---
+
+## Step 5: Update Product Model
+
+Open:
+
+```
+app/Models/Product.php
+```
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use GeneaLabs\LaravelModelCaching\Traits\Cachable;
+
+class Product extends Model
+{
+    use Cachable;
+
+    protected $fillable = [
+        'name',
+        'price',
+        'status'
+    ];
+}
+```
+
+---
+
+## Step 6: Create Product Controller
+
+Generate controller:
+
+```bash
+php artisan make:controller ProductController
+```
+
+Open:
+
+```
+app/Http/Controllers/ProductController.php
+```
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
+
+class ProductController extends Controller
+{
+    public function seed()
+    {
+        Product::truncate();
+
+        Product::create([
+            'name' => 'iPhone 15',
+            'price' => 79999,
+            'status' => 1
+        ]);
+
+        Product::create([
+            'name' => 'Samsung S24',
+            'price' => 74999,
+            'status' => 1
+        ]);
+
+        Cache::forget('active_products');
+
+        return "Products Created Successfully";
+    }
+
+    public function index()
+    {
+        $products = Cache::remember('active_products', 60, function () {
+            logger("Database Query Executed 🔥");
+            return Product::where('status', 1)->get();
+        });
+
+        return view('products', compact('products'));
+    }
+
+    public function withoutCache()
+    {
+        logger("Database Query Executed (No Cache) ❌");
+
+        $products = Product::where('status', 1)->get();
+
+        return response()->json($products, 200, [], JSON_PRETTY_PRINT);
+    }
+
+    public function delete($id)
+    {
+        $product = Product::findOrFail($id);
+        $product->delete();
+
+        Cache::forget('active_products');
+
+        return "Product Deleted";
+    }
+}
+```
+
+---
+
+## Step 7: Define Routes
+
+Open:
+
+```
+routes/web.php
+```
+
+```php
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProductController;
+
+Route::get('/seed', [ProductController::class, 'seed']);
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products-no-cache', [ProductController::class, 'withoutCache']);
+Route::get('/delete/{id}', [ProductController::class, 'delete']);
+```
+
+---
+
+## Step 8: Create Blade View
+
+Create file:
+
+resources/views/products.blade.php
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .price {
+            color: green;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 20px;
+            background: #e6f7ff;
+            color: #007bff;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Product List (Cached)</h1>
+
+    <div class="grid">
+        @foreach($products as $product)
+            <div class="card">
+                <h3>{{ $product->name }}</h3>
+                <div class="price">₹ {{ number_format($product->price, 2) }}</div>
+                <div class="badge">
+                    {{ $product->status ? 'Available' : 'Out of Stock' }}
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+
+</body>
+</html>
+
+```
+
+## Step 9: Testing the Application
+
+Insert Products:
+
+```
+http://127.0.0.1:8000/seed
+```
+<img width="364" height="103" alt="Screenshot 2026-02-11 170532" src="https://github.com/user-attachments/assets/729961ae-f940-4f4b-89dc-17f52bbc3aaa" />
+
+
+View Products:
+
+```
+http://127.0.0.1:8000/products
+```
+<img width="1666" height="406" alt="Screenshot 2026-02-11 170541" src="https://github.com/user-attachments/assets/36030925-2530-4a73-9147-bf9210feeb6f" />
+
+
+Refresh multiple times.
+
+Check logs:
+
+```
+storage/logs/laravel.log
+```
+
+You should see:
+
+```
+Database Query Executed 🔥
+```
+<img width="602" height="139" alt="Screenshot 2026-02-11 170627" src="https://github.com/user-attachments/assets/e26b1229-8d2e-4386-b8f6-87a865800b8e" />
+
+---
+
+## Step 10: Test Delete Function
+
+Delete product:
+
+```
+http://127.0.0.1:8000/delete/1
+```
+
+Refresh `/products`.
+
+Deleted product will no longer appear.
+Cache clears automatically.
+
+---
+
+
