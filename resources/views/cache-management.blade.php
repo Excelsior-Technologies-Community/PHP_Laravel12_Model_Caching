@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
     <title>Cache Management</title>
 
@@ -16,32 +20,42 @@
             margin: 0;
             font-family: Arial, sans-serif;
             background: #f4f6f9;
+            color: #212529;
         }
 
         .navbar {
             background: #212529;
             padding: 15px 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .navbar a {
             color: white;
             text-decoration: none;
-            margin-right: 20px;
+            padding: 8px 12px;
+            border-radius: 6px;
             font-size: 14px;
         }
 
+        .navbar a:hover {
+            background: #343a40;
+        }
+
         .container {
-            max-width: 1000px;
-            margin: 40px auto;
+            max-width: 1100px;
+            margin: 35px auto;
             padding: 0 20px;
         }
 
         .header,
-        .status-card {
+        .card,
+        .keys {
             background: white;
             padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
             margin-bottom: 20px;
         }
 
@@ -74,150 +88,379 @@
             color: #842029;
         }
 
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .metric h3 {
+            margin-top: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .metric-value {
+            font-size: 25px;
+            font-weight: bold;
+        }
+
         .buttons {
-            margin-top: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
         }
 
         .btn {
             display: inline-block;
-            padding: 12px 18px;
+            padding: 11px 16px;
             color: white;
             text-decoration: none;
             border-radius: 6px;
-            margin-right: 10px;
+            font-size: 13px;
         }
 
-        .clear {
-            background: #dc3545;
-        }
-
-        .warm {
-            background: #198754;
-        }
-
-        .view {
+        .blue {
             background: #0d6efd;
         }
 
-        .info {
-            margin-top: 25px;
-            color: #6c757d;
+        .green {
+            background: #198754;
+        }
+
+        .red {
+            background: #dc3545;
+        }
+
+        .orange {
+            background: #fd7e14;
+        }
+
+        .purple {
+            background: #6f42c1;
+        }
+
+        .gray {
+            background: #6c757d;
+        }
+
+        .key {
+            padding: 10px;
+            background: #212529;
+            color: white;
+            border-radius: 6px;
+            margin-bottom: 7px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #664d03;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media(max-width:800px) {
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
         }
     </style>
+
 </head>
 
 <body>
 
-<div class="navbar">
-    <a href="/products">Products</a>
-    <a href="/products/search">Search & Filter</a>
-    <a href="/cache-performance">Performance</a>
-    <a href="/cache-management">Cache Management</a>
-</div>
+    <div class="navbar">
 
-<div class="container">
+        <a href="/products">
+            Products
+        </a>
 
-    @if(session('success'))
-        <div class="success">
-            {{ session('success') }}
-        </div>
-    @endif
+        <a href="/products/search">
+            Search
+        </a>
 
-    <div class="header">
+        <a href="/cache-performance">
+            Performance
+        </a>
 
-        <h1>🧹 Cache Management Dashboard</h1>
+        <a href="/cache-management">
+            Management
+        </a>
 
-        <p>
-            Manage the cached active-product dataset.
-        </p>
+        <a href="/cache-statistics">
+            Statistics
+        </a>
 
     </div>
 
-    <div class="status-card">
 
-        <h2>Active Product Cache</h2>
+    <div class="container">
 
-        @if($cacheExists)
+        @if(session('success'))
+
+        <div class="success">
+            ✓ {{ session('success') }}
+        </div>
+
+        @endif
+
+
+        <div class="header">
+
+            <h1>
+                🧹 Cache Management Dashboard
+            </h1>
+
+            <p>
+                Monitor, warm, refresh and clear
+                Laravel product caches.
+            </p>
+
+        </div>
+
+
+        <!-- Main Cache -->
+
+        <div class="card">
+
+            <h2>
+                Active Product Cache
+            </h2>
+
+
+            @if($cacheExists)
 
             <span class="status active">
                 ✓ CACHE EXISTS
             </span>
 
-            <p>
-                Cached Products:
-                <strong>{{ $cachedProductCount }}</strong>
-            </p>
-
-        @else
+            @else
 
             <span class="status inactive">
                 ✕ CACHE NOT FOUND
             </span>
 
+            @endif
+
+
+            <div class="grid">
+
+                <div class="metric">
+
+                    <h3>
+                        Cached Products
+                    </h3>
+
+                    <div class="metric-value">
+                        {{ $cachedProductCount }}
+                    </div>
+
+                </div>
+
+
+                <div class="metric">
+
+                    <h3>
+                        TTL
+                    </h3>
+
+                    <div class="metric-value">
+                        300 seconds
+                    </div>
+
+                </div>
+
+
+                <div class="metric">
+
+                    <h3>
+                        Remaining
+                    </h3>
+
+                    <div class="metric-value">
+
+                        @if($cacheExists)
+
+                        {{ $remainingSeconds }} sec
+
+                        @else
+
+                        0 sec
+
+                        @endif
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Last Warmed:
+                </strong>
+
+                {{ $warmedAt ?? 'Not warmed yet' }}
+
+            </div>
+
+
+            <div style="margin-top:10px;">
+
+                <strong>
+                    Expires:
+                </strong>
+
+                @if($expiresAt)
+
+                {{ date('Y-m-d H:i:s', $expiresAt) }}
+
+                @else
+
+                Not available
+
+                @endif
+
+            </div>
+
+
+            <div class="buttons">
+
+                <a
+                    href="{{ route('cache.warm') }}"
+                    class="btn green">
+                    🔥 Warm Cache
+                </a>
+
+
+                <a
+                    href="{{ route('cache.refresh') }}"
+                    class="btn blue">
+                    🔄 Refresh Cache
+                </a>
+
+
+                <a
+                    href="{{ route('cache.clear') }}"
+                    class="btn red"
+                    onclick="return confirm('Clear all registered product caches?')">
+                    🗑 Clear Cache
+                </a>
+
+
+                <a
+                    href="{{ route('cache.clear-all') }}"
+                    class="btn purple"
+                    onclick="return confirm('Clear ALL registered product and search caches?')">
+                    🧹 Clear All Caches
+                </a>
+
+
+                <a
+                    href="{{ route('products.index') }}"
+                    class="btn gray">
+                    📦 Products
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- Cache Keys -->
+
+        <div class="keys">
+
+            <h2>
+                🔑 Cache Key Inspector
+            </h2>
+
             <p>
-                The active product cache has not been created yet.
+                These are cache keys registered by the
+                product listing and search functionality.
             </p>
 
-        @endif
 
-        <div class="buttons">
+            @if(count($cacheKeys))
 
-            <a
-                href="/cache-management/warm"
-                class="btn warm"
-            >
-                🔥 Rebuild / Warm Cache
-            </a>
+            @foreach($cacheKeys as $key)
 
-            <a
-                href="/cache-management/clear"
-                class="btn clear"
-                onclick="return confirm('Clear the active product cache?')"
-            >
-                🗑 Clear Cache
-            </a>
+            <div class="key">
+                {{ $key }}
+            </div>
 
-            <a
-                href="/products"
-                class="btn view"
-            >
-                View Products
-            </a>
+            @endforeach
+
+            @else
+
+            <div class="warning">
+                No registered cache keys found.
+            </div>
+
+            @endif
+
+        </div>
+
+
+        <!-- Concepts -->
+
+        <div class="card">
+
+            <h2>
+                💡 Cache Features
+            </h2>
+
+            <ul>
+
+                <li>
+                    <strong>Warm Cache:</strong>
+                    Creates the active-product cache.
+                </li>
+
+                <li>
+                    <strong>Refresh Cache:</strong>
+                    Removes old cached data and
+                    loads the latest database data.
+                </li>
+
+                <li>
+                    <strong>Clear Cache:</strong>
+                    Removes registered product caches.
+                </li>
+
+                <li>
+                    <strong>Clear All Caches:</strong>
+                    Removes product listing and
+                    search cache keys tracked by this application.
+                </li>
+
+                <li>
+                    <strong>Cache Key Inspector:</strong>
+                    Displays registered dynamic cache keys.
+                </li>
+
+                <li>
+                    <strong>TTL:</strong>
+                    Product listing caches use
+                    a 300-second lifetime.
+                </li>
+
+            </ul>
 
         </div>
 
     </div>
 
-    <div class="info">
-
-        <h3>Cache Management Concepts</h3>
-
-        <ul>
-            <li>
-                <strong>Cache Exists:</strong>
-                Confirms whether the active product cache is available.
-            </li>
-
-            <li>
-                <strong>Clear Cache:</strong>
-                Removes the manually cached active product list.
-            </li>
-
-            <li>
-                <strong>Warm Cache:</strong>
-                Queries the database once and stores the result in cache.
-            </li>
-
-            <li>
-                After clearing the cache, opening
-                <strong>/products</strong>
-                creates the cache again.
-            </li>
-        </ul>
-
-    </div>
-
-</div>
-
 </body>
+
 </html>
