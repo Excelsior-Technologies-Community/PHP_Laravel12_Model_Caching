@@ -714,24 +714,35 @@
 
             @if($cacheHit)
 
-            <div class="cache-status cache-hit">
+            <div class="cache-status cache-hit" style="display:flex; justify-space-between; align-items:center;">
 
-                ⚡
-                <strong>Cache HIT</strong>
+                <div>
+                    ⚡
+                    <strong>CACHE HIT ({{ $executionTimeMs }} ms)</strong>
 
-                — This filter/sort combination was
-                loaded from cache.
+                    — Query loaded from memory cache in {{ $executionTimeMs }} ms.
+                </div>
+
+                <span style="background:#0f5132; color:white; padding:3px 8px; border-radius:12px; font-size:11px;">
+                    TTL: {{ $dynamicTtl }}s
+                </span>
 
             </div>
 
             @else
 
-            <div class="cache-status cache-miss">
+            <div class="cache-status cache-miss" style="display:flex; justify-space-between; align-items:center;">
 
-                🔥
-                <strong>Cache MISS</strong>
+                <div>
+                    🔥
+                    <strong>CACHE MISS ({{ $executionTimeMs }} ms)</strong>
 
-                — Database data was loaded and cached.
+                    — Database query executed and cached in {{ $executionTimeMs }} ms.
+                </div>
+
+                <span style="background:#664d03; color:white; padding:3px 8px; border-radius:12px; font-size:11px;">
+                    TTL: {{ $dynamicTtl }}s
+                </span>
 
             </div>
 
@@ -835,6 +846,10 @@
                     </span>
 
                 </div>
+
+                <button type="button" class="btn btn-success" onclick="document.getElementById('createProductModal').style.display='block'">
+                    + Add New Product
+                </button>
 
             </div>
 
@@ -971,12 +986,23 @@
 
                             <td>
 
-                                <a
-                                    href="{{ route('products.delete', $product->id) }}"
-                                    class="btn btn-danger"
-                                    onclick="return confirm('Delete this product?')">
-                                    Delete
-                                </a>
+                                <div style="display:flex; gap:6px;">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-warning"
+                                        onclick="editProduct({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }}, {{ $product->status }})">
+                                        ✏️ Edit
+                                    </button>
+
+                                    <a
+                                        href="{{ route('products.delete', $product->id) }}"
+                                        class="btn btn-danger"
+                                        onclick="return confirm('Delete this product? Model cache will be auto-invalidated.')">
+                                        🗑 Delete
+                                    </a>
+
+                                </div>
 
                             </td>
 
@@ -1104,7 +1130,73 @@
                 ' selected product(s)?'
             );
         }
+
+        function editProduct(id, name, price, status) {
+            document.getElementById('editProductForm').action = '/products/' + id + '/update';
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_price').value = price;
+            document.getElementById('edit_status').value = status;
+            document.getElementById('editProductModal').style.display = 'block';
+        }
     </script>
+
+    <!-- CREATE PRODUCT MODAL -->
+    <div id="createProductModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+        <div style="background:white; max-width:480px; margin:80px auto; padding:25px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">➕ Add Product (Auto-Flushes Cache ⚡)</h3>
+            <form method="POST" action="{{ route('products.store') }}">
+                @csrf
+                <div style="margin-bottom:12px;">
+                    <label>Product Name</label>
+                    <input type="text" name="name" required placeholder="e.g. MacBook Pro M3">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Price (₹)</label>
+                    <input type="number" step="0.01" name="price" required placeholder="149900">
+                </div>
+                <div style="margin-bottom:18px;">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="1">Available</option>
+                        <option value="0">Out of Stock</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('createProductModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save & Flush Cache ⚡</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT PRODUCT MODAL -->
+    <div id="editProductModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+        <div style="background:white; max-width:480px; margin:80px auto; padding:25px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">✏️ Edit Product (Auto-Flushes Cache ⚡)</h3>
+            <form id="editProductForm" method="POST" action="">
+                @csrf
+                <div style="margin-bottom:12px;">
+                    <label>Product Name</label>
+                    <input type="text" id="edit_name" name="name" required>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Price (₹)</label>
+                    <input type="number" step="0.01" id="edit_price" name="price" required>
+                </div>
+                <div style="margin-bottom:18px;">
+                    <label>Status</label>
+                    <select id="edit_status" name="status">
+                        <option value="1">Available</option>
+                        <option value="0">Out of Stock</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editProductModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update & Flush Cache ⚡</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 </body>
 

@@ -297,6 +297,9 @@ class ProductController extends Controller
                 json_encode($filters)
             );
 
+        $startTime = microtime(true);
+        $dynamicTtl = (int) Cache::get('model_cache_dynamic_ttl', self::CACHE_TTL);
+
         /*
         |--------------------------------------------------------------------------
         | Cache Hit / Miss
@@ -333,7 +336,7 @@ class ProductController extends Controller
 
         $products = Cache::remember(
             $cacheKey,
-            self::CACHE_TTL,
+            $dynamicTtl,
             function () use (
                 $search,
                 $status,
@@ -557,6 +560,8 @@ class ProductController extends Controller
                 ->where('status', 1)
                 ->sum('price');
 
+        $executionTimeMs = round((microtime(true) - $startTime) * 1000, 2);
+
         /*
         |--------------------------------------------------------------------------
         | Return View
@@ -589,6 +594,12 @@ class ProductController extends Controller
 
                 'cacheKey' =>
                     $cacheKey,
+
+                'executionTimeMs' =>
+                    $executionTimeMs,
+
+                'dynamicTtl' =>
+                    $dynamicTtl,
 
                 'totalProducts' =>
                     $totalProducts,
@@ -906,6 +917,9 @@ class ProductController extends Controller
 
                 'cacheKeys' =>
                     $cacheKeys,
+
+                'dynamicTtl' =>
+                    (int) Cache::get('model_cache_dynamic_ttl', self::CACHE_TTL),
             ]
         );
     }
@@ -1568,5 +1582,89 @@ class ProductController extends Controller
         foreach ($statisticsKeys as $key) {
             Cache::forget($key);
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Store New Product & Invalidate Cache
+    |--------------------------------------------------------------------------
+    */
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'status' => 'required|in:0,1',
+        ]);
+
+        $product = Product::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'status' => (int) $request->status,
+        ]);
+
+        $this->clearRegisteredCaches();
+
+        return redirect('/products')
+            ->with(
+                'success',
+                "Product '{$product->name}' created successfully and Model Cache auto-invalidated! ⚡"
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update Product & Invalidate Cache
+    |--------------------------------------------------------------------------
+    */
+
+    public function update(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'status' => 'required|in:0,1',
+        ]);
+
+        $product->update([
+            'name' => $request->name,
+            'price' => $request->price,
+            'status' => (int) $request->status,
+        ]);
+
+        $this->clearRegisteredCaches();
+
+        return redirect('/products')
+            ->with(
+                'success',
+                "Product '{$product->name}' updated successfully and Model Cache auto-invalidated! ⚡"
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update Dynamic Cache TTL Studio
+    |--------------------------------------------------------------------------
+    */
+
+    public function updateTtl(Request $request)
+    {
+        $request->validate([
+            'ttl' => 'required|integer|min:1',
+        ]);
+
+        $ttl = (int) $request->ttl;
+        Cache::forever('model_cache_dynamic_ttl', $ttl);
+
+        $this->clearRegisteredCaches();
+
+        return redirect('/cache-management')
+            ->with(
+                'success',
+                "Dynamic Model Cache TTL updated to {$ttl} seconds successfully! 🎛"
+            );
     }
 }

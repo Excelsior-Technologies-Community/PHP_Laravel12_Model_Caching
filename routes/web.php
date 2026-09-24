@@ -159,6 +159,28 @@ Route::get('/cache-statistics', [
 
 /*
 |--------------------------------------------------------------------------
+| Store Product (Triggers Cache Auto-Invalidation)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/products', [
+    ProductController::class,
+    'store'
+])->name('products.store');
+
+/*
+|--------------------------------------------------------------------------
+| Update Product (Triggers Cache Auto-Invalidation)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/products/{id}/update', [
+    ProductController::class,
+    'update'
+])->name('products.update');
+
+/*
+|--------------------------------------------------------------------------
 | Reset Statistics
 |--------------------------------------------------------------------------
 */
@@ -167,3 +189,14 @@ Route::get('/cache-statistics/reset', [
     ProductController::class,
     'resetCacheStatistics'
 ])->name('cache.statistics.reset');
+
+/*
+|--------------------------------------------------------------------------
+| Dynamic Cache TTL Control Studio
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/cache-management/ttl', [
+    ProductController::class,
+    'updateTtl'
+])->name('cache.update-ttl');
