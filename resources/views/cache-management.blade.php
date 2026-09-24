@@ -377,6 +377,53 @@
         </div>
 
 
+        <!-- Dynamic Cache TTL Studio -->
+
+        <div class="card">
+
+            <h2>
+                🎛 Dynamic Model Cache TTL & Strategy Control Studio
+            </h2>
+
+            <p>
+                Select dynamic Time-To-Live (TTL) strategy for cached Eloquent model queries.
+                Changing TTL flushes registered model cache tags/keys automatically.
+            </p>
+
+            <div style="margin-bottom: 20px;">
+                <strong>Current Dynamic Cache Strategy:</strong>
+                <span class="status active" style="font-size: 14px; margin-left: 8px;">
+                    ⚡ {{ $dynamicTtl }} Seconds
+                    @if($dynamicTtl == 300) (5 Minutes - Default)
+                    @elseif($dynamicTtl == 3600) (1 Hour)
+                    @elseif($dynamicTtl == 86400) (1 Day)
+                    @elseif($dynamicTtl >= 31536000) (Permanent / 1 Year)
+                    @else (Custom Strategy)
+                    @endif
+                </span>
+            </div>
+
+            <form action="{{ route('cache.update-ttl') }}" method="POST">
+                @csrf
+                <div class="buttons">
+                    <button type="submit" name="ttl" value="300" class="btn blue" style="border:none; cursor:pointer;">
+                        ⏱️ 5 Minutes (300s)
+                    </button>
+                    <button type="submit" name="ttl" value="3600" class="btn green" style="border:none; cursor:pointer;">
+                        ⏰ 1 Hour (3600s)
+                    </button>
+                    <button type="submit" name="ttl" value="86400" class="btn orange" style="border:none; cursor:pointer;">
+                        📅 1 Day (86400s)
+                    </button>
+                    <button type="submit" name="ttl" value="31536000" class="btn purple" style="border:none; cursor:pointer;">
+                        ♾️ Permanent (1 Year)
+                    </button>
+                </div>
+            </form>
+
+        </div>
+
+
         <!-- Cache Keys -->
 
         <div class="keys">
